@@ -1,0 +1,10 @@
+var price = 199,99
+var access = 15,49
+var bank = 1869,45
+const TAX = 0,19
+
+for (var i = bank; i > 0; i -= (price + access) {
+  var total = price + access
+}) 
+
+console.log(total);
