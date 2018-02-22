@@ -11,12 +11,12 @@ function processFile(file) {
 
 //Datei kann mit oder ohne Endung eingegeben werden
 
-  if (fs.existsSync(args) == true) {
+  if (fs.existsSync(args)) {
     var newEnding = ""
   } else {
 
     for (var i = 0; i < endings.length; i++) {
-      if (fs.existsSync(args + endings[i]) == true) {
+      if (fs.existsSync(args + endings[i])) {
         var newEnding = endings[i]
         break
       }
@@ -39,6 +39,7 @@ function processFile(file) {
   var match
   var datei2 = datei
   var reqBlock = ""
+  var reqTree = ""
   var checkReqSelf = false
 
 
@@ -50,18 +51,20 @@ function processFile(file) {
     var requireType = match[1]
     var requireFile = match[2]
 
+    //Pfad zusammensetzen aus pfad und requireFile; falls requireFile nicht vorhanden wegen require_self, leeren string anfügen
+    var pfadFolder = path.join(pfad, requireFile ? requireFile : "")
     //console.log(match1, match2)
   
     switch(requireType) {
       case "require":
-        reqBlock = reqBlock + processFile(pfad + "/" + requireFile) + "\n"
+        reqBlock = reqBlock + processFile(pfadFolder) + "\n"
         break;
       case "require_self":
         checkReqSelf = true
         reqBlock = reqBlock + datei
         break;
       case "require_tree":
-        processFolder(pfad + "/" + requireFile)
+        reqBlock = reqBlock + processFolder(pfadFolder) + "\n"
         break; 
     }
 
@@ -78,17 +81,19 @@ function processFile(file) {
 
 function processFolder(folder) {
   var tree = fs.readdirSync(folder, { encoding: "utf8" })
+  var folderBlock = ""
 
   for (var i = 0; i < tree.length; i++) {
     var pfad = path.join(folder, tree[i]) 
+
     if (fs.lstatSync(pfad).isDirectory()) {
-      processFolder(pfad)
+      folderBlock = folderBlock + processFolder(pfad) + "\n"
     } else {
-      processFile(pfad)
+      folderBlock = folderBlock + processFile(pfad) + "\n"
     }
   }
 
-  return tree
+  return folderBlock
 }
 
 
