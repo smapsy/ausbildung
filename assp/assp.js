@@ -44,7 +44,7 @@ function processFile(file) {
 
 
   //Switch über die verschiedenen require Arten, und wenn es sich um require handelt, dann die Funktion mit Pfad + Datei und rückgabe and Dateiinhalt Vorhängen.
-//Rekursion sich selbst aufrufende Funktion; Datei 2 um mit exec nicht die Dtei aufzurufen, die dann geändert wird
+//Rekursion sich selbst aufrufende Funktion; Datei 2 um mit exec nicht die Datei aufzurufen, die dann geändert wird
 
   while ((match = regex1.exec(datei2)) !== null) {
     var require = match[0]
