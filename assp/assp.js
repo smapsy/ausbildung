@@ -1,6 +1,11 @@
 //Asset Packager
 var fs = require('fs')
 var path = require('path')
+var coffee = require('coffee-script')
+var sass = require('sass')
+var less = require('less-sync')
+var eco = require('eco')
+var ecoCounter = 0
 
 
 function processFile(file) {
@@ -25,6 +30,8 @@ function processFile(file) {
   }
 
   var trueEnding = path.extname(args + newEnding)
+  var fileName = path.basename(args + newEnding)
+  
 
   //Inhalt der Datei Ausgeben, wenn sie existiert
 
@@ -47,7 +54,12 @@ function processFile(file) {
       datei = transformScss(datei)
       break;
     case ".eco":
-      datei = transformEco(datei, pfad)
+      ecoCounter++
+      if (ecoCounter == 1) {
+        datei = "window.JST = {};" + transformEco(datei, pfad)
+      } else {
+        datei = transformEco(datei, pfad)
+      }
       break;
   }
 
@@ -57,7 +69,6 @@ function processFile(file) {
   var match
   var datei2 = datei
   var reqBlock = ""
-  var reqTree = ""
   var checkReqSelf = false
 
 
@@ -115,20 +126,22 @@ function processFolder(folder) {
 }
 
 function transformLess(file, pfad) {
-  return file + "\n" + "//LESS Datei mit Pfad " + pfad
+  return "//LESS Datei mit Pfad " + pfad + "\n" + less.compile(file, pfad)
 }
 
 function transformCoffee(file) {
-  return file + "\n" + "//COFFEE Datei"
+  return "//COFFEE Datei" + "\n" + coffee.compile(file) + "\n"
 }
 
 function transformScss(file) {
-  return file + "\n" + "//SCSS Datei"
+  return "//SCSS Datei" + "\n" + sass.renderSync({ data: file }).css.toString("utf-8") + "\n"
 }
 
+//window.JST['templates/template']({ name: 'Peter' })
 function transformEco(file, pfad) {
-  return file + "\n" + "//ECO Datei mit Pfad " + pfad + " und Dateiname "
-}
+  return "//ECO Datei " + "\n" + "window.JST['" + pfad + "'] = " + eco.precompile(file)
+} 
+
 
 var output = processFile(process.argv[2])
 //var output = processFolder(process.argv[2])
