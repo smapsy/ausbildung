@@ -24,7 +24,7 @@ function processFile(file) {
     }
   }
 
-   var trueEnding = path.extname(args + newEnding)
+  var trueEnding = path.extname(args + newEnding)
 
   //Inhalt der Datei Ausgeben, wenn sie existiert
 
