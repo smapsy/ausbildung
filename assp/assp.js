@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 //Asset Packager
 var fs = require('fs')
 var path = require('path')
@@ -5,7 +6,11 @@ var coffee = require('coffee-script')
 var sass = require('sass')
 var less = require('less-sync')
 var eco = require('eco')
-var ecoCounter = 0
+var UglifyJS = require("uglify-js")
+var uglifycss = require('uglifycss')
+
+
+var ecoEncounter = false
 
 
 function processFile(file) {
@@ -30,13 +35,12 @@ function processFile(file) {
   }
 
   var trueEnding = path.extname(args + newEnding)
-  var fileName = path.basename(args + newEnding)
-  
+  var fileName = path.basename(args, '.jst.eco')
 
-  //Inhalt der Datei Ausgeben, wenn sie existiert
 
   try {
     var datei = fs.readFileSync(args + newEnding, { encoding: "utf8" })
+    var datei2 = datei
   }
   catch (err) {
     console.log(args + " nicht vorhanden")
@@ -54,11 +58,13 @@ function processFile(file) {
       datei = transformScss(datei)
       break;
     case ".eco":
-      ecoCounter++
-      if (ecoCounter == 1) {
-        datei = "window.JST = {};" + transformEco(datei, pfad)
+      var ecoPfad = path.relative(startPfad, pfad)
+
+      if (!ecoEncounter) {
+        ecoEncounter =true
+        datei = "window.JST = {};" + transformEco(datei, ecoPfad, fileName)
       } else {
-        datei = transformEco(datei, pfad)
+        datei = transformEco(datei, ecoPfad, fileName)
       }
       break;
   }
@@ -67,7 +73,6 @@ function processFile(file) {
 
   var regex1 = /^\s?(?:#=|\/\/=|\*=).(require(?:(?:_self)|(?:_tree))?)(?: (.*))?$/gm
   var match
-  var datei2 = datei
   var reqBlock = ""
   var checkReqSelf = false
 
@@ -126,24 +131,37 @@ function processFolder(folder) {
 }
 
 function transformLess(file, pfad) {
-  return "//LESS Datei mit Pfad " + pfad + "\n" + less.compile(file, pfad)
+  return less.compile(file, pfad) + "\n"
 }
 
 function transformCoffee(file) {
-  return "//COFFEE Datei" + "\n" + coffee.compile(file) + "\n"
+  return coffee.compile(file) + "\n" 
 }
 
 function transformScss(file) {
-  return "//SCSS Datei" + "\n" + sass.renderSync({ data: file }).css.toString("utf-8") + "\n"
+  return sass.renderSync({ data: file }).css.toString("utf-8") + "\n"
 }
 
 //window.JST['templates/template']({ name: 'Peter' })
-function transformEco(file, pfad) {
-  return "//ECO Datei " + "\n" + "window.JST['" + pfad + "'] = " + eco.precompile(file)
-} 
+function transformEco(file, pfad, dateiName) {
+  return "window.JST['" + pfad + "/" + dateiName + "'] = " + eco.precompile(file) + ";" + "\n"
+}
 
+//oben nicht required, da nur ienmal aufgerufen wird
+var argv = require('minimist')(process.argv.slice(2));
 
-var output = processFile(process.argv[2])
+var startPfad = path.dirname(argv._[0])
+
+var output = processFile(argv._[0])
+
+if (argv.u) {
+  output = UglifyJS.minify(output).code
+}
+
+if (argv.c) {
+  output = uglifycss.processString(output)
+}
+
 //var output = processFolder(process.argv[2])
 //var output = transformLess(process.argv[2])
 
